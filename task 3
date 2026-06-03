@@ -1,0 +1,68 @@
+const express = require("express");
+
+console.log("CRUD VERSION RUNNING");
+
+const app = express();
+
+app.use(express.json());
+
+let books = [
+  {
+    id: 1,
+    title: "Book One",
+    author: "Author One"
+  }
+];
+
+app.get("/books", function (req, res) {
+  res.json(books);
+});
+
+app.post("/books", function (req, res) {
+  let newBook = {
+    id: books.length + 1,
+    title: req.body.title,
+    author: req.body.author
+  };
+
+  books.push(newBook);
+
+  res.json(newBook);
+});
+
+app.put("/books/:id", function (req, res) {
+  let id = parseInt(req.params.id);
+
+  let book = books.find(function (item) {
+    return item.id === id;
+  });
+
+  if (!book) {
+    return res.send("Book not found");
+  }
+
+  book.title = req.body.title;
+  book.author = req.body.author;
+
+  res.json(book);
+});
+
+app.delete("/books/:id", function (req, res) {
+  let id = parseInt(req.params.id);
+
+  books = books.filter(function (item) {
+    return item.id !== id;
+  });
+
+  res.send("Book deleted");
+});
+
+app.listen(8080, function () {
+  console.log("Server running on port 8080");
+});
+
+search on browser="http://localhost:8080/books" to see output
+how i can connect with the help of browser search=
+I built a REST API using Node.js and Express. 
+The API manages a list of books stored in memory and supports CRUD operations through GET, POST, PUT, and DELETE endpoints. 
+I tested the API using Postman and learned Express routing, HTTP methods, JSON handling, and API debugging.
