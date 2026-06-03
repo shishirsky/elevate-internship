@@ -61,6 +61,8 @@ app.listen(8080, function () {
   console.log("Server running on port 8080");
 });
 
+
+//output information and struggling to do this //
 search on browser="http://localhost:8080/books" to see output
 how i can connect with the help of browser search=
 I built a REST API using Node.js and Express. 
