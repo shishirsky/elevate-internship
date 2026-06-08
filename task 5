@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="page-wrapper">
+
+        <div class="form-card">
+
+            <div class="form-header">
+                <div class="icon">✉</div>
+                <h1>Contact Us</h1>
+                <p>Fill in the form below and we'll get back to you.</p>
+            </div>
+
+            <form id="contactForm" novalidate>
+
+                <!-- NAME FIELD -->
+                <div class="form-group" id="nameGroup">
+                    <label for="name">Full Name <span class="required">*</span></label>
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="e.g. Rahul Sharma"
+                        autocomplete="off"
+                    >
+                    <span class="error-msg" id="nameError"></span>
+                </div>
+
+                <!-- EMAIL FIELD -->
+                <div class="form-group" id="emailGroup">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="e.g. rahul@gmail.com"
+                        autocomplete="off"
+                    >
+                    <span class="error-msg" id="emailError"></span>
+                </div>
+
+                <!-- MESSAGE FIELD -->
+                <div class="form-group" id="messageGroup">
+                    <label for="message">Message <span class="required">*</span></label>
+                    <textarea
+                        id="message"
+                        rows="5"
+                        placeholder="Write your message here..."
+                    ></textarea>
+                    <span class="error-msg" id="messageError"></span>
+                </div>
+
+                <button type="submit" id="submitBtn">Send Message</button>
+
+                <!-- SUCCESS MESSAGE -->
+                <div class="success-msg" id="successMessage"></div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
+
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== PAGE ===== */
+body {
+    font-family: 'Georgia', serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 15px;
+}
+
+/* ===== CARD ===== */
+.form-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 16px;
+    padding: 45px 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== HEADER ===== */
+.form-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.form-header .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.form-header h1 {
+    font-size: 28px;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.form-header p {
+    font-size: 14px;
+    color: #888;
+}
+
+/* ===== FORM GROUP ===== */
+.form-group {
+    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+/* ===== INPUTS ===== */
+.form-group input,
+.form-group textarea {
+    padding: 12px 15px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fafafa;
+    color: #222;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    outline: none;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #0f3460;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.1);
+}
+
+/* ===== ERROR STATE ===== */
+.form-group.error input,
+.form-group.error textarea {
+    border-color: #e74c3c;
+    background: #fff8f8;
+}
+
+.form-group.error input:focus,
+.form-group.error textarea:focus {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12);
+}
+
+/* ===== SUCCESS STATE ===== */
+.form-group.success input,
+.form-group.success textarea {
+    border-color: #27ae60;
+    background: #f8fff9;
+}
+
+/* ===== ERROR MESSAGE ===== */
+.error-msg {
+    font-size: 12.5px;
+    color: #e74c3c;
+    min-height: 16px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.error-msg:not(:empty)::before {
+    content: '⚠';
+    font-size: 12px;
+}
+
+/* ===== SUBMIT BUTTON ===== */
+#submitBtn {
+    width: 100%;
+    padding: 14px;
+    background: #1a1a2e;
+    color: white;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.6px;
+    transition: background 0.2s, transform 0.15s;
+    margin-top: 5px;
+}
+
+#submitBtn:hover {
+    background: #0f3460;
+    transform: translateY(-2px);
+}
+
+#submitBtn:active {
+    transform: translateY(0);
+}
+
+/* ===== SUCCESS MESSAGE ===== */
+.success-msg {
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: #eafaf1;
+    border: 1.5px solid #27ae60;
+    border-radius: 8px;
+    color: #1e8449;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    display: none;
+}
+
+.success-msg.show {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 560px) {
+    .form-card {
+        padding: 30px 22px;
+    }
+
+    .form-header h1 {
+        font-size: 24px;
+    }
+
+    body {
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+}
+
+// ============================================================
+// Contact Form Validation Script
+// Covers: non-empty check, email regex, error messages,
+//         success message, prevent invalid submission
+// ============================================================
+
+// Wait for DOM to be ready
+document.getElementById("contactForm").addEventListener("submit", function(event) {
+
+    // 1. Prevent actual form submission every time
+    event.preventDefault();
+
+    // 2. Get input values and trim whitespace
+    let name    = document.getElementById("name").value.trim();
+    let email   = document.getElementById("email").value.trim();
+    let message = document.getElementById("message").value.trim();
+
+    // 3. Clear all previous error messages and states
+    clearErrors();
+
+    // 4. Track overall validity
+    let isValid = true;
+
+    // ---- VALIDATE NAME ----
+    if (name === "") {
+        showError("name", "Name is required.");
+        isValid = false;
+    } else if (name.length < 2) {
+        showError("name", "Name must be at least 2 characters.");
+        isValid = false;
+    } else {
+        showSuccess("name");
+    }
+
+    // ---- VALIDATE EMAIL ----
+    // Regex: must have characters @ characters . characters
+    let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email === "") {
+        showError("email", "Email is required.");
+        isValid = false;
+    } else if (!emailPattern.test(email)) {
+        showError("email", "Enter a valid email (e.g. name@example.com).");
+        isValid = false;
+    } else {
+        showSuccess("email");
+    }
+
+    // ---- VALIDATE MESSAGE ----
+    if (message === "") {
+        showError("message", "Message is required.");
+        isValid = false;
+    } else if (message.length < 10) {
+        showError("message", "Message must be at least 10 characters.");
+        isValid = false;
+    } else {
+        showSuccess("message");
+    }
+
+    // 5. If all valid → show success, reset form
+    if (isValid) {
+        let successBox = document.getElementById("successMessage");
+        successBox.innerText = "✅ Form submitted successfully! We'll get back to you soon.";
+        successBox.classList.add("show");
+
+        // Reset form fields after success
+        document.getElementById("contactForm").reset();
+
+        // Remove green borders after reset
+        removeSuccessStates();
+    }
+
+});
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+// Show error message and add error class to group
+function showError(fieldId, message) {
+    document.getElementById(fieldId + "Error").innerText = message;
+    document.getElementById(fieldId + "Group").classList.add("error");
+    document.getElementById(fieldId + "Group").classList.remove("success");
+}
+
+// Add success class to group
+function showSuccess(fieldId) {
+    document.getElementById(fieldId + "Group").classList.add("success");
+    document.getElementById(fieldId + "Group").classList.remove("error");
+}
+
+// Clear all errors and success states before re-validating
+function clearErrors() {
+    document.getElementById("nameError").innerText    = "";
+    document.getElementById("emailError").innerText   = "";
+    document.getElementById("messageError").innerText = "";
+
+    document.getElementById("successMessage").innerText = "";
+    document.getElementById("successMessage").classList.remove("show");
+
+    document.getElementById("nameGroup").classList.remove("error", "success");
+    document.getElementById("emailGroup").classList.remove("error", "success");
+    document.getElementById("messageGroup").classList.remove("error", "success");
+}
+
+// Remove green borders after form reset
+function removeSuccessStates() {
+    document.getElementById("nameGroup").classList.remove("success");
+    document.getElementById("emailGroup").classList.remove("success");
+    document.getElementById("messageGroup").classList.remove("success");
+}
