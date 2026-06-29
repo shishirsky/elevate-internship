@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Forge — Live Code Editor</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="brand"><span class="dot"></span>FORGE</div>
+
+    <select id="templateSelect" title="Start from a template">
+      <option value="">Templates…</option>
+      <option value="blank">Blank</option>
+      <option value="landing">Landing page</option>
+      <option value="card">Animated card</option>
+      <option value="todo">Todo list</option>
+    </select>
+
+    <div class="seg" id="layoutSeg">
+      <button data-layout="split" class="active">Split</button>
+      <button data-layout="editor">Editor</button>
+      <button data-layout="preview">Preview</button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <span id="status">Ready</span>
+    <button class="icon" id="saveBtn" title="Save snippet to your library">💾 Save</button>
+    <button class="icon" id="libraryBtn" title="Open snippet library">📂 Library</button>
+    <button class="icon" id="shareBtn" title="Copy a shareable link">🔗 Share</button>
+    <button class="primary" id="runBtn" title="Re-run preview">▶ Run</button>
+  </div>
+
+  <div id="body">
+    <div id="editors" style="flex:1;">
+      <div class="tabs">
+        <div class="tab active" data-lang="html"><span class="tagdot"></span>index.html</div>
+        <div class="tab" data-lang="css"><span class="tagdot"></span>style.css</div>
+        <div class="tab" data-lang="js"><span class="tagdot"></span>script.js</div>
+      </div>
+      <div id="pane-html" class="editor-pane active"></div>
+      <div id="pane-css" class="editor-pane"></div>
+      <div id="pane-js" class="editor-pane"></div>
+    </div>
+
+    <div id="resizer"></div>
+
+    <div id="preview-wrap" style="flex:1;">
+      <div id="preview-bar">
+        <span class="urlchip">about:srcdoc</span>
+        <span id="autoRunLabel">auto-run on</span>
+      </div>
+      <iframe id="preview" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Library modal -->
+<div class="modal-overlay" id="libraryModal">
+  <div class="modal">
+    <h3>Saved snippets</h3>
+    <div id="snippetList"><div class="empty-state">No snippets saved yet.</div></div>
+    <div class="close-row"><button id="closeLibraryBtn">Close</button></div>
+  </div>
+</div>
+
+<!-- Save modal -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal">
+    <h3>Save snippet</h3>
+    <input type="text" id="saveNameInput" placeholder="Snippet name…">
+    <div class="close-row">
+      <button id="cancelSaveBtn">Cancel</button>
+      <button class="primary" id="confirmSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
+
+
+//css //
+
+
+:root{
+  --bg: #0d1117;
+  --panel: #11161d;
+  --panel-2: #161c25;
+  --line: #232b36;
+  --text: #d7dee8;
+  --muted: #6b7785;
+  --accent: #ff8a3d;
+  --accent-dim: #ff8a3d33;
+  --html-tag: #7dd3fc;
+  --css-tag: #a78bfa;
+  --js-tag: #fbbf24;
+  --mono: "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;}
+
+#app{display:flex;flex-direction:column;height:100vh;}
+
+/* ---------- Top bar ---------- */
+#topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:0 16px;height:52px;flex:0 0 52px;
+  background:var(--panel);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:700;letter-spacing:.5px;color:var(--text);margin-right:6px;}
+.brand .dot{width:9px;height:9px;border-radius:2px;background:var(--accent);transform:rotate(45deg);}
+select, button{
+  font-family:var(--sans);font-size:13px;border-radius:6px;border:1px solid var(--line);
+  background:var(--panel-2);color:var(--text);padding:7px 10px;cursor:pointer;
+}
+select:hover, button:hover{border-color:var(--accent);}
+button.primary{background:var(--accent);color:#1a0e05;border-color:var(--accent);font-weight:600;}
+button.primary:hover{filter:brightness(1.08);}
+button.icon{padding:7px 9px;}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+.seg button{border:none;border-radius:0;background:var(--panel-2);}
+.seg button.active{background:var(--accent-dim);color:var(--accent);}
+.spacer{flex:1;}
+#status{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:80px;}
+
+/* ---------- Body layout ---------- */
+#body{flex:1;display:flex;min-height:0;}
+
+#editors{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);}
+#editors.hidden{display:none;}
+#preview-wrap{flex:1;min-width:0;display:flex;flex-direction:column;}
+#preview-wrap.hidden{display:none;}
+
+.tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 38px;}
+.tab{
+  display:flex;align-items:center;gap:7px;padding:0 16px;font-family:var(--mono);font-size:12.5px;
+  color:var(--muted);cursor:pointer;border-right:1px solid var(--line);user-select:none;
+}
+.tab .tagdot{width:7px;height:7px;border-radius:50%;}
+.tab[data-lang="html"] .tagdot{background:var(--html-tag);}
+.tab[data-lang="css"] .tagdot{background:var(--css-tag);}
+.tab[data-lang="js"] .tagdot{background:var(--js-tag);}
+.tab.active{color:var(--text);background:var(--panel-2);border-bottom:2px solid var(--accent);}
+
+.editor-pane{flex:1;min-height:0;display:none;}
+.editor-pane.active{display:block;}
+
+#preview-bar{
+  display:flex;align-items:center;gap:8px;padding:0 12px;height:38px;flex:0 0 38px;
+  background:var(--panel);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--muted);
+}
+#preview-bar .urlchip{flex:1;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:4px 10px;color:var(--muted);}
+iframe#preview{flex:1;border:none;background:#fff;width:100%;}
+
+/* resizer */
+#resizer{width:5px;cursor:col-resize;background:var(--panel);flex:0 0 5px;}
+#resizer:hover{background:var(--accent-dim);}
+
+/* ---------- Modal (snippets / share) ---------- */
+.modal-overlay{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:460px;max-width:92vw;max-height:80vh;overflow:auto;padding:18px 20px;}
+.modal h3{margin:0 0 12px;font-size:14px;font-family:var(--mono);color:var(--accent);}
+.modal input[type=text]{width:100%;padding:8px 10px;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12.5px;margin-bottom:10px;}
+.snippet-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel-2);}
+.snippet-row .name{font-family:var(--mono);font-size:12.5px;}
+.snippet-row .meta{font-size:11px;color:var(--muted);}
+.snippet-row .acts{display:flex;gap:6px;}
+.snippet-row button{padding:4px 8px;font-size:11px;}
+.modal .close-row{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+.empty-state{color:var(--muted);font-size:12.5px;font-family:var(--mono);padding:14px 4px;}
+.toast{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  background:var(--panel-2);border:1px solid var(--accent);color:var(--text);
+  padding:9px 16px;border-radius:7px;font-family:var(--mono);font-size:12.5px;
+  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:60;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+
+
+//js file//
+
+const TEMPLATES = {
+  blank: {
+    html: `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <title>Document</title>\n</head>\n<body>\n  <h1>Hello, world</h1>\n</body>\n</html>`,
+    css: `body {\n  font-family: sans-serif;\n  margin: 2rem;\n}`,
+    js: `console.log("Hello from script.js");`
+  },
+  landing: {
+    html: `<section class="hero">\n  <h1>Build faster.</h1>\n  <p>A landing page starter, ready to customize.</p>\n  <button id="cta">Get started</button>\n</section>`,
+    css: `body{margin:0;font-family:'Segoe UI',sans-serif;background:#0f172a;color:#fff;}\n.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1rem;}\n.hero h1{font-size:3rem;margin:0;}\n.hero p{color:#94a3b8;max-width:420px;}\n#cta{padding:.8rem 1.6rem;border:none;border-radius:8px;background:#f97316;color:#1a0e05;font-weight:700;cursor:pointer;font-size:1rem;}\n#cta:hover{filter:brightness(1.1);}`,
+    js: `document.getElementById('cta').addEventListener('click', () => {\n  alert('Let\\'s go!');\n});`
+  },
+  card: {
+    html: `<div class="card">\n  <div class="badge">NEW</div>\n  <h2>Animated Card</h2>\n  <p>Hover to see the effect.</p>\n</div>`,
+    css: `body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#111827;font-family:sans-serif;}\n.card{position:relative;width:260px;padding:2rem;border-radius:16px;background:#1f2937;color:#fff;transition:transform .3s, box-shadow .3s;}\n.card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(0,0,0,.4);}\n.badge{position:absolute;top:-10px;right:-10px;background:#f97316;color:#1a0e05;font-size:.7rem;font-weight:700;padding:.3rem .6rem;border-radius:999px;}\n.card h2{margin:0 0 .5rem;}\n.card p{color:#9ca3af;margin:0;}`,
+    js: `// No JS needed — pure CSS hover effect`
+  },
+  todo: {
+    html: `<div class="app">\n  <h1>Todo</h1>\n  <input id="input" placeholder="Add a task and press Enter" />\n  <ul id="list"></ul>\n</div>`,
+    css: `body{margin:0;font-family:sans-serif;background:#f8fafc;display:flex;justify-content:center;padding-top:3rem;}\n.app{width:320px;}\ninput{width:100%;padding:.6rem;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;margin-bottom:1rem;}\nul{list-style:none;padding:0;}\nli{padding:.5rem .6rem;background:#fff;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:.4rem;display:flex;justify-content:space-between;cursor:pointer;}\nli.done{text-decoration:line-through;color:#94a3b8;}`,
+    js: `const input = document.getElementById('input');\nconst list = document.getElementById('list');\ninput.addEventListener('keydown', e => {\n  if (e.key === 'Enter' && input.value.trim()) {\n    const li = document.createElement('li');\n    li.textContent = input.value.trim();\n    li.addEventListener('click', () => li.classList.toggle('done'));\n    list.appendChild(li);\n    input.value = '';\n  }\n});`
+  }
+};
+
+let editors = {};
+let currentLang = 'html';
+let autoRunTimer = null;
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function buildPreviewDoc(){
+  const html = editors.html.getValue();
+  const css = editors.css.getValue();
+  const js = editors.js.getValue();
+  return `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html.replace(/<\/?(!DOCTYPE|html|head|body)[^>]*>/gi,'')}<script>${js}<\/script></body></html>`;
+}
+
+function runPreview(){
+  document.getElementById('preview').srcdoc = buildPreviewDoc();
+  document.getElementById('status').textContent = 'Ran ' + new Date().toLocaleTimeString();
+}
+
+function scheduleAutoRun(){
+  clearTimeout(autoRunTimer);
+  autoRunTimer = setTimeout(runPreview, 500);
+}
+
+function loadTemplate(name){
+  const t = TEMPLATES[name] || TEMPLATES.blank;
+  editors.html.setValue(t.html);
+  editors.css.setValue(t.css);
+  editors.js.setValue(t.js);
+  runPreview();
+}
+
+function getState(){
+  return { html: editors.html.getValue(), css: editors.css.getValue(), js: editors.js.getValue() };
+}
+function setState(s){
+  editors.html.setValue(s.html||'');
+  editors.css.setValue(s.css||'');
+  editors.js.setValue(s.js||'');
+  runPreview();
+}
+
+/* ---------- Sharing via URL hash ---------- */
+function encodeState(s){
+  return btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+}
+function decodeState(str){
+  return JSON.parse(decodeURIComponent(escape(atob(str))));
+}
+function shareLink(){
+  const encoded = encodeState(getState());
+  const url = location.origin + location.pathname + '#code=' + encoded;
+  navigator.clipboard.writeText(url).then(()=>{
+    showToast('Share link copied to clipboard');
+  }).catch(()=>{
+    showToast('Could not copy — see console');
+    console.log(url);
+  });
+}
+
+/* ---------- Snippet library (persistent storage) ---------- */
+async function saveSnippet(name){
+  const id = 'snippet:' + Date.now();
+  const payload = { name, ...getState(), savedAt: Date.now() };
+  try{
+    await window.storage.set(id, JSON.stringify(payload));
+    showToast('Saved "' + name + '"');
+  }catch(e){
+    showToast('Save failed');
+    console.error(e);
+  }
+}
+
+async function listSnippets(){
+  const listEl = document.getElementById('snippetList');
+  listEl.innerHTML = '<div class="empty-state">Loading…</div>';
+  try{
+    const res = await window.storage.list('snippet:');
+    const keys = (res && res.keys) || [];
+    if(!keys.length){
+      listEl.innerHTML = '<div class="empty-state">No snippets saved yet.</div>';
+      return;
+    }
+    const items = [];
+    for(const k of keys){
+      try{
+        const r = await window.storage.get(k);
+        if(r) items.push({ key: k, data: JSON.parse(r.value) });
+      }catch(e){}
+    }
+    items.sort((a,b)=> (b.data.savedAt||0) - (a.data.savedAt||0));
+    listEl.innerHTML = '';
+    items.forEach(item=>{
+      const row = document.createElement('div');
+      row.className = 'snippet-row';
+      const date = item.data.savedAt ? new Date(item.data.savedAt).toLocaleString() : '';
+      row.innerHTML = `
+        <div>
+          <div class="name">${escapeHtml(item.data.name||'untitled')}</div>
+          <div class="meta">${date}</div>
+        </div>
+        <div class="acts">
+          <button data-act="load">Load</button>
+          <button data-act="delete">Delete</button>
+        </div>`;
+      row.querySelector('[data-act=load]').addEventListener('click', ()=>{
+        setState(item.data);
+        document.getElementById('libraryModal').classList.remove('show');
+        showToast('Loaded "' + item.data.name + '"');
+      });
+      row.querySelector('[data-act=delete]').addEventListener('click', async ()=>{
+        await window.storage.delete(item.key);
+        listSnippets();
+      });
+      listEl.appendChild(row);
+    });
+  }catch(e){
+    listEl.innerHTML = '<div class="empty-state">Could not load snippets.</div>';
+    console.error(e);
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- Layout ---------- */
+function setLayout(mode){
+  document.querySelectorAll('#layoutSeg button').forEach(b=>b.classList.toggle('active', b.dataset.layout===mode));
+  const editorsEl = document.getElementById('editors');
+  const previewEl = document.getElementById('preview-wrap');
+  const resizer = document.getElementById('resizer');
+  editorsEl.classList.remove('hidden');
+  previewEl.classList.remove('hidden');
+  resizer.style.display = '';
+  if(mode==='editor'){ previewEl.classList.add('hidden'); resizer.style.display='none'; }
+  else if(mode==='preview'){ editorsEl.classList.add('hidden'); resizer.style.display='none'; }
+  setTimeout(()=>{ Object.values(editors).forEach(e=>e.layout()); }, 50);
+}
+
+/* ---------- Resizer drag ---------- */
+function initResizer(){
+  const resizer = document.getElementById('resizer');
+  const editorsEl = document.getElementById('editors');
+  let dragging = false;
+  resizer.addEventListener('mousedown', ()=>{ dragging = true; document.body.style.cursor='col-resize'; });
+  window.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const bodyRect = document.getElementById('body').getBoundingClientRect();
+    const newWidth = e.clientX - bodyRect.left;
+    editorsEl.style.flex = `0 0 ${Math.max(200, Math.min(newWidth, bodyRect.width-200))}px`;
+    Object.values(editors).forEach(ed=>ed.layout());
+  });
+  window.addEventListener('mouseup', ()=>{ dragging=false; document.body.style.cursor=''; });
+}
+
+/* ---------- Init ---------- */
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+require(['vs/editor/editor.main'], function(){
+  monaco.editor.defineTheme('forge-dark', {
+    base: 'vs-dark', inherit: true, rules: [],
+    colors: { 'editor.background': '#11161d' }
+  });
+
+  editors.html = monaco.editor.create(document.getElementById('pane-html'), {
+    value: TEMPLATES.blank.html, language: 'html', theme: 'forge-dark',
+    automaticLayout: true, minimap:{enabled:false}, fontSize:13, fontFamily:"JetBrains Mono, monospace"
+  });
+  editors.css = monaco.editor.create(document.getElementById('pane-css'), {
+    value: TEMPLATES.blank.css, language: 'css', theme: 'forge-dark',
+    automaticLayout: true, minimap:{enabled:false}, fontSize:13, fontFamily:"JetBrains Mono, monospace"
+  });
+  editors.js = monaco.editor.create(document.getElementById('pane-js'), {
+    value: TEMPLATES.blank.js, language: 'javascript', theme: 'forge-dark',
+    automaticLayout: true, minimap:{enabled:false}, fontSize:13, fontFamily:"JetBrains Mono, monospace"
+  });
+
+  Object.values(editors).forEach(ed => ed.onDidChangeModelContent(scheduleAutoRun));
+
+  // load from share link if present
+  const hash = location.hash;
+  if(hash.startsWith('#code=')){
+    try{
+      const s = decodeState(hash.slice(6));
+      setState(s);
+      showToast('Loaded shared snippet');
+    }catch(e){ runPreview(); }
+  } else {
+    runPreview();
+  }
+
+  initResizer();
+});
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.editor-pane').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    currentLang = tab.dataset.lang;
+    document.getElementById('pane-'+currentLang).classList.add('active');
+    setTimeout(()=> editors[currentLang] && editors[currentLang].layout(), 30);
+  });
+});
+
+/* ---------- Top bar actions ---------- */
+document.getElementById('runBtn').addEventListener('click', runPreview);
+document.getElementById('templateSelect').addEventListener('change', e=>{
+  if(e.target.value) loadTemplate(e.target.value);
+  e.target.value = '';
+});
+document.querySelectorAll('#layoutSeg button').forEach(b=>{
+  b.addEventListener('click', ()=> setLayout(b.dataset.layout));
+});
+document.getElementById('shareBtn').addEventListener('click', shareLink);
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  document.getElementById('saveNameInput').value='';
+  document.getElementById('saveModal').classList.add('show');
+  document.getElementById('saveNameInput').focus();
+});
+document.getElementById('cancelSaveBtn').addEventListener('click', ()=> document.getElementById('saveModal').classList.remove('show'));
+document.getElementById('confirmSaveBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('saveNameInput').value.trim() || 'Untitled snippet';
+  await saveSnippet(name);
+  document.getElementById('saveModal').classList.remove('show');
+});
+
+document.getElementById('libraryBtn').addEventListener('click', ()=>{
+  document.getElementById('libraryModal').classList.add('show');
+  listSnippets();
+});
+document.getElementById('closeLibraryBtn').addEventListener('click', ()=> document.getElementById('libraryModal').classList.remove('show'));
